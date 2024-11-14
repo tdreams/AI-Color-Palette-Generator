@@ -21,6 +21,8 @@ import {
   Save,
   ImageIcon,
   Loader2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 import { Switch } from "@/components/ui/switch";
@@ -246,6 +248,7 @@ export default function ColorPaletteGenerator() {
     });
   };
  */
+
   const copyColorCode = (hex: string) => {
     navigator.clipboard.writeText(hex);
     toast({ title: "Copied", description: `${hex} copied to clipboard.` });
@@ -385,7 +388,9 @@ export default function ColorPaletteGenerator() {
                 >
                   <Heart
                     className={`h-4 w-4 ${
-                      favorites.has(palette.id) ? "fill-current" : ""
+                      favorites.has(palette.id)
+                        ? "fill-current text-red-500"
+                        : ""
                     }`}
                   />
                 </Button>
@@ -396,7 +401,7 @@ export default function ColorPaletteGenerator() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80">
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
                       <div>
                         <h4 className="font-medium mb-2">Color Details</h4>
                         {palette.colors.map((color, colorIndex) => (
@@ -415,23 +420,8 @@ export default function ColorPaletteGenerator() {
                                 </div>
                               </div>
                             </div>
-                            <div className="mt-1 pl-6">
-                              <p className="text-sm text-muted-foreground">
-                                {color.psychology.meaning}
-                              </p>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {color.psychology.associations.map(
-                                  (association, i) => (
-                                    <span
-                                      key={i}
-                                      className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium"
-                                    >
-                                      {association}
-                                    </span>
-                                  )
-                                )}
-                              </div>
-                            </div>
+                            {/* Collapsible Description */}
+                            <CollapsibleDescription color={color} />
                           </div>
                         ))}
                       </div>
@@ -469,7 +459,10 @@ export default function ColorPaletteGenerator() {
                                   className={`text-sm font-medium ${
                                     palette.accessibility.wcag.normal === "AAA"
                                       ? "text-green-600"
-                                      : "text-amber-600"
+                                      : palette.accessibility.wcag.normal ===
+                                        "AA"
+                                      ? "text-yellow-600"
+                                      : "text-red-600"
                                   }`}
                                 >
                                   {palette.accessibility.wcag.normal}
@@ -481,7 +474,10 @@ export default function ColorPaletteGenerator() {
                                   className={`text-sm font-medium ${
                                     palette.accessibility.wcag.large === "AAA"
                                       ? "text-green-600"
-                                      : "text-amber-600"
+                                      : palette.accessibility.wcag.large ===
+                                        "AA"
+                                      ? "text-yellow-600"
+                                      : "text-red-600"
                                   }`}
                                 >
                                   {palette.accessibility.wcag.large}
@@ -529,7 +525,7 @@ export default function ColorPaletteGenerator() {
                 {palette.colors.map((color, index) => (
                   <div
                     key={index}
-                    className="aspect-square rounded flex items-center justify-center text-xs font-medium text-white"
+                    className="aspect-square rounded flex items-center justify-center text-xs font-medium text-white cursor-pointer hover:opacity-80"
                     style={{ backgroundColor: color.hex }}
                     onClick={() => copyColorCode(color.hex)}
                   >
@@ -544,3 +540,52 @@ export default function ColorPaletteGenerator() {
     </div>
   );
 }
+
+// CollapsibleDescription Component
+interface CollapsibleDescriptionProps {
+  color: Color;
+}
+
+const CollapsibleDescription: React.FC<CollapsibleDescriptionProps> = ({
+  color,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleDescription = () => {
+    setIsOpen((prev) => !prev);
+  };
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={toggleDescription}
+        className="flex items-center gap-1 text-sm text-blue-500 hover:underline focus:outline-none"
+      >
+        {isOpen ? (
+          <>
+            Hide Details <ChevronUp className="h-4 w-4" />
+          </>
+        ) : (
+          <>
+            Show Details <ChevronDown className="h-4 w-4" />
+          </>
+        )}
+      </button>
+      {isOpen && (
+        <div className="mt-2 pl-6">
+          <p className="text-sm text-muted-foreground">
+            <strong>Meaning:</strong> {color.psychology.meaning}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            <strong>Three Associations:</strong>
+          </p>
+          <ul className="list-disc list-inside text-sm text-muted-foreground">
+            {color.psychology.associations.map((association, index) => (
+              <li key={index}>{association}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
