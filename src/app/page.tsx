@@ -65,6 +65,7 @@ export default function ColorPaletteGenerator() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [palettes, setPalettes] = useState<Palette[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [savedPalettes, setSavedPalettes] = useState<Palette[]>([]);
   /* const [gradientOpacity, setGradientOpacity] = useState(0.5); */
   const [showAccessibility, setShowAccessibility] = useState(false);
@@ -355,7 +356,7 @@ export default function ColorPaletteGenerator() {
 
       {/* Palette Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {palettes.map((palette, index) => (
+        {palettes.map((palette, _) => (
           <Card key={palette.id} className="overflow-hidden">
             {/* Palette Header */}
             <CardHeader

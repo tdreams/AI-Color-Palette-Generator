@@ -15,12 +15,6 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement;
 };
 
-type ActionType =
-  | "ADD_TOAST"
-  | "UPDATE_TOAST"
-  | "DISMISS_TOAST"
-  | "REMOVE_TOAST";
-
 function genId() {
   return Date.now().toString() + Math.random().toString(36).substr(2, 9);
 }
