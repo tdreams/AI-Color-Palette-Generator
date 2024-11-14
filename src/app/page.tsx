@@ -356,7 +356,7 @@ export default function ColorPaletteGenerator() {
 
       {/* Palette Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {palettes.map((palette, _) => (
+        {palettes.map((palette) => (
           <Card key={palette.id} className="overflow-hidden">
             {/* Palette Header */}
             <CardHeader
