@@ -66,7 +66,7 @@ export default function ColorPaletteGenerator() {
   const [palettes, setPalettes] = useState<Palette[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [savedPalettes, setSavedPalettes] = useState<Palette[]>([]);
-  const [gradientOpacity, setGradientOpacity] = useState(0.5);
+  /* const [gradientOpacity, setGradientOpacity] = useState(0.5); */
   const [showAccessibility, setShowAccessibility] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
