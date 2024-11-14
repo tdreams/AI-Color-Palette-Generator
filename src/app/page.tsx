@@ -27,9 +27,8 @@ import { Switch } from "@/components/ui/switch";
 
 import { toast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import Image from "next/image";
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
+
 interface ColorPsychology {
   emotion: string;
   meaning: string;
