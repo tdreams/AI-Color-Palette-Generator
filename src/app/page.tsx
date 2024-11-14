@@ -14,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import {
   Heart,
   Info,
-  RefreshCcw,
   Upload,
   Wand2,
   Download,
@@ -23,15 +22,14 @@ import {
   ImageIcon,
   Loader2,
 } from "lucide-react";
-import { Slider } from "@/components/ui/slider";
+
 import { Switch } from "@/components/ui/switch";
-import { Toast } from "@/components/ui/toast";
+
 import { toast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import Image from "next/image";
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
-
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 interface ColorPsychology {
   emotion: string;
   meaning: string;
@@ -238,7 +236,7 @@ export default function ColorPaletteGenerator() {
     });
   };
 
-  const swapColors = (paletteIndex: number) => {
+  /* const swapColors = (paletteIndex: number) => {
     setPalettes((prev) => {
       const newPalettes = [...prev];
       const palette = { ...newPalettes[paletteIndex] };
@@ -247,7 +245,7 @@ export default function ColorPaletteGenerator() {
       return newPalettes;
     });
   };
-
+ */
   const copyColorCode = (hex: string) => {
     navigator.clipboard.writeText(hex);
     toast({ title: "Copied", description: `${hex} copied to clipboard.` });
@@ -330,7 +328,7 @@ export default function ColorPaletteGenerator() {
             </div>
             {uploadedImage && (
               <div className="mb-4">
-                <img
+                <Image
                   src={uploadedImage}
                   alt="Uploaded"
                   className="max-h-40 rounded-md mx-auto sm:mx-0"
