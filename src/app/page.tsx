@@ -1,87 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
-import {
-  Heart,
-  Info,
-  Upload,
-  Wand2,
-  Download,
-  Share2,
-  Save,
-  ImageIcon,
-  Loader2,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import Header from "@/components/common/Header";
+import Footer from "@/components/common/Footer";
+import Hero from "@/components/hero/Hero";
+import Features from "@/components/features/Features";
+import HowItWorks from "@/components/how-it-works/HowItWorks";
+import PaletteGenerator from "@/components/palette-generator/PaletteGenerator";
+import PaletteCard from "@/components/palette-generator/PaletteCard";
 
-import { Switch } from "@/components/ui/switch";
+import { toast } from "@/hooks/use-toast"; // Ensure toast is imported if used here
+import { Palette } from "@/types/types";
 
-import { toast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
-import Image from "next/image";
+export default function HomePage() {
+  const featuresRef = useRef<HTMLElement>(null);
+  const howItWorksRef = useRef<HTMLElement>(null);
 
-interface ColorPsychology {
-  emotion: string;
-  meaning: string;
-  associations: string[];
-}
-
-interface Color {
-  name: string;
-  hex: string;
-  rgb: string;
-  psychology: ColorPsychology;
-}
-
-interface Palette {
-  id: string;
-  name: string;
-  emotion: string;
-  colors: Color[];
-  description: string;
-  accessibility: {
-    contrast: string;
-    colorBlindness: string;
-    readability: string;
-    wcag: {
-      normal: string;
-      large: string;
-    };
-  };
-}
-
-export default function ColorPaletteGenerator() {
-  const [inputMode, setInputMode] = useState<"prompt" | "image">("prompt");
-  const [prompt, setPrompt] = useState("");
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  // State to hold generated palettes
   const [palettes, setPalettes] = useState<Palette[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [savedPalettes, setSavedPalettes] = useState<Palette[]>([]);
-  /* const [gradientOpacity, setGradientOpacity] = useState(0.5); */
   const [showAccessibility, setShowAccessibility] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
 
+  // Load saved palettes from localStorage on mount
   useEffect(() => {
-    // Load saved palettes from localStorage
     const saved = localStorage.getItem("savedPalettes");
     if (saved) {
       setSavedPalettes(JSON.parse(saved));
     }
 
-    // Load favorites from localStorage
     const savedFavorites = localStorage.getItem("favoritePalettes");
     if (savedFavorites) {
       setFavorites(new Set(JSON.parse(savedFavorites)));
@@ -96,95 +43,12 @@ export default function ColorPaletteGenerator() {
     );
   }, [favorites]);
 
-  const handleGenerate = async () => {
-    if (!prompt && inputMode === "prompt") {
-      toast({
-        title: "Input Required",
-        description: "Please enter a prompt to generate palettes.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!uploadedImage && inputMode === "image") {
-      toast({
-        title: "Image Required",
-        description: "Please upload an image to generate palettes.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    setProgress(0);
-
-    try {
-      // Simulate progress during API call
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => Math.min(prev + 10, 90));
-      }, 500);
-
-      const response = await fetch("/api/generatePalettes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-          mode: inputMode,
-          image: uploadedImage,
-        }),
-      });
-
-      clearInterval(progressInterval);
-
-      if (!response.ok) {
-        throw new Error("Failed to generate palettes");
-      }
-
-      const data = await response.json();
-      setPalettes(data.palettes);
-      setProgress(100);
-
-      toast({
-        title: "Success",
-        description: "Color palettes generated successfully!",
-      });
-    } catch (error) {
-      console.error("Error generating palettes:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate palettes. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-      setTimeout(() => setProgress(0), 500);
-    }
+  // Handler to update palettes from PaletteGenerator
+  const handlePalettesUpdate = (newPalettes: Palette[]) => {
+    setPalettes(newPalettes);
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
-        toast({
-          title: "File Too Large",
-          description: "Please upload an image smaller than 5MB.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target?.result as string);
-        setInputMode("image");
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
+  // Handlers for favorite functionality
   const toggleFavorite = (paletteId: string) => {
     setFavorites((prev) => {
       const newFavorites = new Set(prev);
@@ -197,6 +61,7 @@ export default function ColorPaletteGenerator() {
     });
   };
 
+  // Handlers for saving, sharing, downloading palettes
   const savePalette = (palette: Palette) => {
     setSavedPalettes((prev) => {
       const newSavedPalettes = [...prev, palette];
@@ -231,23 +96,11 @@ export default function ColorPaletteGenerator() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-
     toast({
       title: "Download Started",
       description: "Your palette file is being downloaded.",
     });
   };
-
-  /* const swapColors = (paletteIndex: number) => {
-    setPalettes((prev) => {
-      const newPalettes = [...prev];
-      const palette = { ...newPalettes[paletteIndex] };
-      palette.colors = [...palette.colors].reverse();
-      newPalettes[paletteIndex] = palette;
-      return newPalettes;
-    });
-  };
- */
 
   const copyColorCode = (hex: string) => {
     navigator.clipboard.writeText(hex);
@@ -255,337 +108,52 @@ export default function ColorPaletteGenerator() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4 text-center sm:text-left">
-          AI Color Palette Generator
-        </h1>
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-background to-muted">
+      {/* Header */}
+      <Header featuresRef={featuresRef} howItWorksRef={howItWorksRef} />
 
-        {/* Input Controls */}
-        <Tabs
-          value={inputMode}
-          onValueChange={(value) => setInputMode(value as "prompt" | "image")}
-          className="w-full"
-        >
-          <TabsList className="mb-4">
-            <TabsTrigger value="prompt">Text Prompt</TabsTrigger>
-            <TabsTrigger value="image">Upload Image</TabsTrigger>
-          </TabsList>
+      {/* Main Content */}
+      <main className="flex-grow container mx-auto px-6 py-12 space-y-24">
+        {/* Hero Section */}
+        <Hero />
 
-          {/* Text Prompt Input */}
-          <TabsContent value="prompt">
-            <div className="flex flex-col sm:flex-row gap-2 mb-4">
-              <Input
-                placeholder="Enter a theme, mood, or concept (e.g., 'sunset beach', 'cyberpunk city', 'peaceful garden')..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="flex-grow"
-                disabled={isLoading}
-              />
-              <Button
-                onClick={handleGenerate}
-                disabled={isLoading}
-                className="w-full sm:w-auto"
-              >
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Wand2 className="mr-2 h-4 w-4" />
-                )}
-                Generate
-              </Button>
-            </div>
-          </TabsContent>
+        {/* Palette Generator Section */}
+        <PaletteGenerator onPalettesGenerated={handlePalettesUpdate} />
 
-          {/* Image Upload Input */}
-          <TabsContent value="image">
-            <div className="flex flex-col sm:flex-row gap-2 mb-4">
-              <div className="flex-grow">
-                <Label htmlFor="image-upload" className="cursor-pointer">
-                  <div className="flex items-center justify-center h-10 px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md">
-                    <Upload className="mr-2 h-4 w-4" />
-                    {uploadedImage ? "Change Image" : "Upload Image"}
-                  </div>
-                </Label>
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={isLoading}
-                />
-              </div>
-              <Button
-                onClick={handleGenerate}
-                disabled={!uploadedImage || isLoading}
-                className="w-full sm:w-auto"
-              >
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <ImageIcon className="mr-2 h-4 w-4" />
-                )}
-                Extract Colors
-              </Button>
-            </div>
-            {uploadedImage && (
-              <div className="mb-4">
-                <Image
-                  src={uploadedImage}
-                  alt="Uploaded"
-                  className="max-h-40 rounded-md mx-auto sm:mx-0"
-                />
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+        {/* Palette Cards Section */}
 
-        {/* Accessibility Toggle */}
-        <div className="flex items-center gap-2 mt-4">
-          <Switch
-            id="show-accessibility"
-            checked={showAccessibility}
-            onCheckedChange={setShowAccessibility}
-          />
-          <Label htmlFor="show-accessibility">
-            Show Accessibility Information
-          </Label>
-        </div>
-
-        {/* Progress Bar */}
-        {progress > 0 && <Progress value={progress} className="mt-4" />}
-      </div>
-
-      {/* Palette Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {palettes.map((palette) => (
-          <Card key={palette.id} className="overflow-hidden">
-            {/* Palette Header */}
-            <CardHeader
-              className="relative p-4"
-              style={{ backgroundColor: palette.colors[0].hex }}
-            >
-              <CardTitle
-                className="text-xl font-bold"
-                style={{ color: palette.colors[1].hex }}
-              >
-                {palette.name}
-              </CardTitle>
-              <div
-                className="text-base"
-                style={{ color: palette.colors[2].hex }}
-              >
-                {palette.emotion}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="absolute top-2 right-2 flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => toggleFavorite(palette.id)}
-                >
-                  <Heart
-                    className={`h-4 w-4 ${
-                      favorites.has(palette.id)
-                        ? "fill-current text-red-500"
-                        : ""
-                    }`}
-                  />
-                </Button>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Info className="h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="space-y-4 max-h-96 overflow-y-auto">
-                      <div>
-                        <h4 className="font-medium mb-2">Color Details</h4>
-                        {palette.colors.map((color, colorIndex) => (
-                          <div key={colorIndex} className="mb-3">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-4 h-4 rounded-full"
-                                style={{ backgroundColor: color.hex }}
-                              />
-                              <div>
-                                <div className="text-sm font-medium">
-                                  {color.name}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {color.hex} | {color.rgb}
-                                </div>
-                              </div>
-                            </div>
-                            {/* Collapsible Description */}
-                            <CollapsibleDescription color={color} />
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Accessibility Information */}
-                      {showAccessibility && (
-                        <div>
-                          <h4 className="font-medium mb-2">Accessibility</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span>Contrast:</span>
-                              <span className="font-medium">
-                                {palette.accessibility.contrast}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Color Blindness:</span>
-                              <span className="font-medium">
-                                {palette.accessibility.colorBlindness}
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm">Readability:</span>
-                              <span className="text-sm font-medium">
-                                {palette.accessibility.readability}
-                              </span>
-                            </div>
-                            <div className="border-t pt-2 mt-2">
-                              <div className="text-sm font-medium mb-1">
-                                WCAG Compliance
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm">Normal Text:</span>
-                                <span
-                                  className={`text-sm font-medium ${
-                                    palette.accessibility.wcag.normal === "AAA"
-                                      ? "text-green-600"
-                                      : palette.accessibility.wcag.normal ===
-                                        "AA"
-                                      ? "text-yellow-600"
-                                      : "text-red-600"
-                                  }`}
-                                >
-                                  {palette.accessibility.wcag.normal}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm">Large Text:</span>
-                                <span
-                                  className={`text-sm font-medium ${
-                                    palette.accessibility.wcag.large === "AAA"
-                                      ? "text-green-600"
-                                      : palette.accessibility.wcag.large ===
-                                        "AA"
-                                      ? "text-yellow-600"
-                                      : "text-red-600"
-                                  }`}
-                                >
-                                  {palette.accessibility.wcag.large}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Swap and Save Actions */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => savePalette(palette)}
-                  className="hover:bg-background/20"
-                >
-                  <Save className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => sharePalette(palette)}
-                  className="hover:bg-background/20"
-                >
-                  <Share2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => downloadPalette(palette)}
-                  className="hover:bg-background/20"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-
-            {/* Palette Colors */}
-            <CardContent className="p-4">
-              <div className="grid grid-cols-2 gap-2">
-                {palette.colors.map((color, index) => (
-                  <div
-                    key={index}
-                    className="aspect-square rounded flex items-center justify-center text-xs font-medium text-white cursor-pointer hover:opacity-80"
-                    style={{ backgroundColor: color.hex }}
-                    onClick={() => copyColorCode(color.hex)}
-                  >
-                    {color.name}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// CollapsibleDescription Component
-interface CollapsibleDescriptionProps {
-  color: Color;
-}
-
-const CollapsibleDescription: React.FC<CollapsibleDescriptionProps> = ({
-  color,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggleDescription = () => {
-    setIsOpen((prev) => !prev);
-  };
-
-  return (
-    <div className="mt-2">
-      <button
-        onClick={toggleDescription}
-        className="flex items-center gap-1 text-sm text-blue-500 hover:underline focus:outline-none"
-      >
-        {isOpen ? (
+        {/* Conditionally render Features and HowItWorks if no palettes are present */}
+        {palettes.length === 0 && (
           <>
-            Hide Details <ChevronUp className="h-4 w-4" />
-          </>
-        ) : (
-          <>
-            Show Details <ChevronDown className="h-4 w-4" />
+            {/* Features Section */}
+            <Features ref={featuresRef} />
+
+            {/* How It Works Section */}
+            <HowItWorks ref={howItWorksRef} />
           </>
         )}
-      </button>
-      {isOpen && (
-        <div className="mt-2 pl-6">
-          <p className="text-sm text-muted-foreground">
-            <strong>Meaning:</strong> {color.psychology.meaning}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            <strong>Three Associations:</strong>
-          </p>
-          <ul className="list-disc list-inside text-sm text-muted-foreground">
-            {color.psychology.associations.map((association, index) => (
-              <li key={index}>{association}</li>
+
+        {palettes.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {palettes.map((palette) => (
+              <PaletteCard
+                key={palette.id}
+                palette={palette}
+                isFavorite={favorites.has(palette.id)}
+                onToggleFavorite={() => toggleFavorite(palette.id)}
+                onSave={() => savePalette(palette)}
+                onShare={() => sharePalette(palette)}
+                onDownload={() => downloadPalette(palette)}
+                onCopyColor={copyColorCode}
+                showAccessibility={showAccessibility}
+              />
             ))}
-          </ul>
-        </div>
-      )}
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
-};
+}
